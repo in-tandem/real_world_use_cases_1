@@ -13,15 +13,30 @@ from keras.callbacks import Callback
 class CalculateF1ScoreAtEachEpoch(Callback):
 
     def on_train_begin(self, logs={}):
-        self.val_f1s = []
-        self.val_recalls = []
-        self.val_precisions = []
+        self.val_f1s = {}
+        self.val_recalls = {}
+        self.val_precisions = {}
 
     def on_epoch_end(self, epoch, logs={}):
-        val_predict = (np.asarray(self.model.predict(self.model.validation_data[0]))).round()
-        val_targ = self.model.validation_data[1]
+        """
+            len(self.validation_data) == 3, because 
+            validation_data[0] == train_x (that you input in model.fit()), 
+            validation_data[1] == train_y, 
+            validation_data[2]=sample_weight,
+
+        validation_data needs to be provided in the fit method
+        else self.validation_data will be empty
+
+        """
+        val_predict = self.model.predict(self.validation_data[0])
+        val_predict = (val_predict > 0.5) ##using the same activation function
+        val_targ = self.validation_data[1]
         all_metrics = precision_recall_fscore_support(val_targ, val_predict, average = 'weighted')
         print("val_f1: %f — val_precision: %f — val_recall %f" %(all_metrics[2], all_metrics[0], all_metrics[1]))
+        
+        self.val_f1s[epoch] = all_metrics[2]
+        self.val_recalls[epoch] = all_metrics[1]
+        self.val_precisions[epoch] = all_metrics[0]
         return
 
 
@@ -106,25 +121,21 @@ def create_model():
     ##adding our output layer. expecting only one neuron since we have a binary classification
     classifier.add(Dense(1, activation='sigmoid')) ##logistic regression
     
-    ##adding our custom f1 scorer
-    metric = CalculateF1ScoreAtEachEpoch()
-
-
-    ##forclassifcation issues, metrics is always accuracy
-    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy',metric])
+       ##forclassifcation issues, metrics is always accuracy
+    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
     
     return classifier
 
-def plot_accuracy_results(history, epoch_size):
+def plot_accuracy_results(y_data, epoch_size, xlabel, ylabel, title):
 
-    accuracies_across_epochs = history.get('acc')
+    # accuracies_across_epochs = history.get('acc')
 
-    plot.plot(list(range(1, epoch_size + 1)) ,accuracies_across_epochs)
+    plot.plot(list(range(1, epoch_size + 1)) ,y_data)
 
-    plot.xlabel("Epochs")
-    plot.ylabel("Accuracies")
-    plot.title("Accuracies across epochs")
+    plot.xlabel(xlabel)
+    plot.ylabel(ylabel)
+    plot.title(title)
 
     plot.show()
 
@@ -161,8 +172,13 @@ def run():
     
     model = create_model()
     epoch_size = 100 
-    
-    model.fit(x_train, y_train, batch_size = 10, epochs = epoch_size)
+
+    ##adding our custom f1 scorer
+    custom_metric = CalculateF1ScoreAtEachEpoch()
+ 
+    ##validation_data needs to be provided
+    ## else in custom callbacks we would be empty
+    model.fit(x_train, y_train, batch_size = 10, epochs = epoch_size, validation_data = (x_train, y_train), callbacks = [custom_metric])
     
     y_predicted = model.predict(x_test)
     
@@ -195,7 +211,15 @@ def run():
     ## in order to get the accuracies at each epoch
     ## model.history.history.get('acc')
     
-    plot_accuracy_results(model.history.history, epoch_size)
+    plot_accuracy_results(model.history.history.get('acc'),\
+            epoch_size, xlabel = 'Epochs', ylabel = 'Accuracy', \
+                title = 'Accuracy across each epoch')
+
+    print('f1 at the end of each epoch ', custom_metric.val_f1s)
+
+    plot_accuracy_results(custom_metric.val_f1s.values(),\
+            epoch_size, xlabel = 'Epochs', ylabel = 'Accuracy', \
+                title = 'Accuracy across each epoch')
     
     
 run()
