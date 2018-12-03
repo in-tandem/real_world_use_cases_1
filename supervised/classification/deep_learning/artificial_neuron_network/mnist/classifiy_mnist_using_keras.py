@@ -7,6 +7,7 @@ from keras.layers import Dense, Activation
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score,precision_recall_fscore_support
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from keras.callbacks import Callback
+from collections import Counter
 
 pickled_form = 'C:\\Users\\somak\\Documents\\somak_python\\real_world_use_cases_1\\supervised\\classification\\deep_learning\\artificial_neuron_network\\mnist\\minst_compressed.npz'
 
@@ -42,8 +43,8 @@ def prepare_classifier(x, y):
     return classifier
 
 
-def fit(classifier, x_train, y_train, epoch_size):
-    classifier.fit(x_train, y_train, batch_size = 100, epochs = epoch_size )
+def fit(classifier, x_train, y_train, epoch_size, batch_size = 10):
+    classifier.fit(x_train, y_train, batch_size = batch_size, epochs = epoch_size )
 
 def predict(classifier, x_test, y_test):
 
@@ -74,7 +75,7 @@ def execute():
     x_train = x_train / 255
     x_test = x_test / 255
 
-    epoch_size = 1000
+    epoch_size = 100
     ## output variables i.e y values are already between 0 - 9.
     ## y values are between 0 -9. this is a multiclass classification
     ## problem. we would perform a one hot encoding to the target 
@@ -100,21 +101,31 @@ def execute():
         array([1, 0, 2, 2, 3, 5], dtype=int64)
     '''
     y_train = keras.utils.to_categorical(y_train, 10)
-    y_test = keras.utils.to_categorical(y_test, 10)
+    y_test_categorized = keras.utils.to_categorical(y_test, 10)
 
     classifier = prepare_classifier(x_train, y_train)
     fit(classifier, x_train, y_train, epoch_size )
 
-    y_predicted = predict(classifier, x_test, y_test)
+    y_predicted = predict(classifier, x_test, y_test_categorized)
 
-    print(len(np.unique(y_predicted)))
-
-    for i in list(y_predicted):
-        print(i)
-
+    ##reconverting categorical to actual values
     y_predicted_arg_max = np.argmax(y_predicted, axis = 1)
     print(y_predicted_arg_max, '\n unique values are :',np.unique(y_predicted_arg_max))
 
+
+    diff = np.argmax(y_test_categorized, axis =1) - y_predicted_arg_max
+
+    counter = Counter(diff)   
+
+    print(counter)
+    correct_guesses = counter.get(0)
+    print('Total number of values correctly guessed - ', correct_guesses, \
+            '\n Incorrect guesses - ', y_predicted_arg_max.shape[0] - correct_guesses)
+
+
+    accuracies_across_epochs = classifier.history.history.get('acc')
+
+    plot_metrics(accuracies_across_epochs , epoch_size, 'Epochs', 'Accuracy', 'Accuracy across epoch')
     
 execute()
 
