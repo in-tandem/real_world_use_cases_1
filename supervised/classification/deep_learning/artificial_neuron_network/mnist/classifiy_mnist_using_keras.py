@@ -1,6 +1,7 @@
-import  numpy as np 
-import pandas as panda  
+import  numpy as np
+import pandas as panda
 from matplotlib import pyplot as plot
+import keras 
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score,precision_recall_fscore_support
@@ -25,19 +26,24 @@ def prepare_classifier(x, y):
     ## number of neurons = 30
     ## kernel_initializer determines how the weights are initialized
     ## activation is the activation function at this particular hidden layer
-    classifier.add(Dense(units = 30, activation = 'relu',kernel_initializer = 'uniform', input_dim = shape_of_input[1]))
+    ## input_shape is the number of features in a single row.. in this case it is shape_of_input[1]
+    ## shape_of_input[0] is the total number of such rows
+    classifier.add(Dense(units = 30, activation = 'relu', kernel_initializer = 'uniform', input_dim = shape_of_input[1]))
 
-    classifier.add(Dense(units = 30, activation = 'relu',kernel_initializer = 'uniform'))
+    classifier.add(Dense(units = 30, activation = 'relu', kernel_initializer = 'uniform'))
 
-    classifier.add(Dense(10, activation = 'sigmoid'))
+    ## we are predicting 10 digits for each row of x.
+    ## in total there are shape_of_input[0] rows in total
+    classifier.add(Dense(10, activation = 'softmax'))
 
-    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+    ## categorical_crossentropy is the loss function for multi output loss function
+    classifier.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics = ['accuracy'])
 
     return classifier
 
 
 def fit(classifier, x_train, y_train, epoch_size):
-    classifier.fit(x_train, y_train, batch_size = 10, epochs = epoch_size )
+    classifier.fit(x_train, y_train, batch_size = 100, epochs = epoch_size )
 
 def predict(classifier, x_test, y_test):
 
@@ -64,13 +70,52 @@ def execute():
     print('shape of input ', x_train.shape)
     print('shape of target ', y_train.shape)
 
-    epoch_size = 100
-    classifier = prepare_classifier(x_train[:15000], y_train[:15000])
-    # fit(classifier, x_train[:15000], y_train[:15000], epoch_size )
+    ## lets scale these input values . pixels ranges are between 0 -255. so dividing by 255 will give us a range of 0-1
+    x_train = x_train / 255
+    x_test = x_test / 255
 
-    # y_predicted = predict(classifier, x_test, y_test)
+    epoch_size = 1000
+    ## output variables i.e y values are already between 0 - 9.
+    ## y values are between 0 -9. this is a multiclass classification
+    ## problem. we would perform a one hot encoding to the target 
+    ## variable using keras.to_Categorical matrix.
+    ## this will in essence convert each to a binary matrix
+    ## our final loss function calculator will be crossentropy for
+    ## multiclass classification. keras additionally dictates 
+    ## that using categorical_crossentropy as a loss function
+    ## required to_categorical subset
+    ## the below shows how to convert back
 
+    '''
+        >>> a = np.array([1,0,2,2,3,5])
+        >>> to_categorical(a)
+        array([[0., 1., 0., 0., 0., 0.],
+        [1., 0., 0., 0., 0., 0.],
+        [0., 0., 1., 0., 0., 0.],
+        [0., 0., 1., 0., 0., 0.],
+        [0., 0., 0., 1., 0., 0.],
+        [0., 0., 0., 0., 0., 1.]], dtype=float32)
+        >>> bb=to_categorical(a)
+        >>> np.argmax(bb, axis = 1)
+        array([1, 0, 2, 2, 3, 5], dtype=int64)
+    '''
+    y_train = keras.utils.to_categorical(y_train, 10)
+    y_test = keras.utils.to_categorical(y_test, 10)
 
+    classifier = prepare_classifier(x_train, y_train)
+    fit(classifier, x_train, y_train, epoch_size )
+
+    y_predicted = predict(classifier, x_test, y_test)
+
+    print(len(np.unique(y_predicted)))
+
+    for i in list(y_predicted):
+        print(i)
+
+    y_predicted_arg_max = np.argmax(y_predicted, axis = 1)
+    print(y_predicted_arg_max, '\n unique values are :',np.unique(y_predicted_arg_max))
+
+    
 execute()
 
 
