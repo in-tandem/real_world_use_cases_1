@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation
 from sklearn.metrics import confusion_matrix, f1_score, accuracy_score,precision_recall_fscore_support
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from sklearn.pipeline import make_pipeline, Pipeline
 from keras.callbacks import Callback
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import GridSearchCV
@@ -45,13 +46,19 @@ def prepare_classifier():
 
 def fit(classifier, x_train, y_train, epoch_size, batch_size = 10):
 
+
+    pipeline = Pipeline([
+                ('keras_classifier', classifier)
+        ])
+
     param_grid = {
 
-        'batch_size' : [10,20,30,50],
-        'epochs' : [100, 200, 300],
+        'keras_classifier__batch_size' : [10,20,30,50],
+        'keras_classifier__epochs' : [100, 200, 300],
     }
 
-    grid = GridSearchCV(estimator = classifier, param_grid = param_grid, n_jobs = -1)
+
+    grid = GridSearchCV(estimator = pipeline, param_grid = param_grid, n_jobs = -1)
     grid.fit(x_train, y_train)
 
     print("Best parameters are : ", grid.best_params_, '\n grid best score :', grid.best_score_)
