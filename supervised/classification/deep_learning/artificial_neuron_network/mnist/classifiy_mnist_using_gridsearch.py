@@ -21,8 +21,11 @@ def load_from_pickled_form(path = pickled_form):
 
     return data.get('x_train'), data.get('x_test'), data.get('y_train'), data.get('y_test')
 
-def prepare_classifier():
+def prepare_classifier(x_data, y_data):
     
+    shape_of_input = x_data.shape
+    shape_of_target = y_data.shape
+
     classifier  = Sequential()
 
     ## number of neurons = 30
@@ -30,7 +33,7 @@ def prepare_classifier():
     ## activation is the activation function at this particular hidden layer
     ## input_shape is the number of features in a single row.. in this case it is shape_of_input[1]
     ## shape_of_input[0] is the total number of such rows
-    classifier.add(Dense(units = 30, activation = 'relu', kernel_initializer = 'uniform', input_dim = 784))
+    classifier.add(Dense(units = 30, activation = 'relu', kernel_initializer = 'uniform', input_dim = shape_of_input[1]))
 
     classifier.add(Dense(units = 30, activation = 'relu', kernel_initializer = 'uniform'))
 
@@ -55,6 +58,9 @@ def fit(classifier, x_train, y_train, epoch_size, batch_size = 10):
 
         'keras_classifier__batch_size' : [10,20,30,50],
         'keras_classifier__epochs' : [100, 200, 300],
+        'keras_classifier__x_data' : [x_train],
+        'keras_classifier__y_data' : [y_train],
+        
     }
 
 
@@ -121,7 +127,7 @@ def execute():
     y_train = keras.utils.to_categorical(y_train[:100], 10)
     y_test_categorized = keras.utils.to_categorical(y_test, 10)
 
-    classifier =  KerasClassifier(build_fn = prepare_classifier )
+    classifier =  KerasClassifier(build_fn = prepare_classifier)
 
     fit(classifier, x_train[:100], y_train, epoch_size )
 
