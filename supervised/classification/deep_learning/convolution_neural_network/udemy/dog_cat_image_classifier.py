@@ -1,5 +1,5 @@
 import numpy as np 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Convolution2D
 from keras.layers import MaxPooling2D
 from keras.layers import Flatten
@@ -10,6 +10,7 @@ from keras import losses
 from keras import optimizers
 from keras.callbacks import Callback
 from skimage import io
+
 
 FULL_TRAINING_PATH = 'CNN//Convolutional_Neural_Networks//dataset//training_set'
 FULL_TESTING_PATH = 'CNN/Convolutional_Neural_Networks/dataset/test_set'
@@ -175,18 +176,10 @@ def execute():
                             # callbacks = [PredictionLogger()]
                          )
 
-
+    classifier.save('cats_or_dogs.h5py')
     ## commented for now since for now we are only trying out for 1 epoch
     # plotResultsAcrossEpoch(classifier.history.history.get(''), 1, \
     #                   xlabel = '', ylabel = '', title = '')
-    
-
-    ## check.. is the history still available
-    ## check.. use one image to check for predict function
-    ## check.. when you predict see what it returns.
-    ## check.. if its a number we may need to specify a threshold value for which is cat/dog
-    ## 
-    # plot_model(classifier, to_file='image_classifier_model.png')
     
     ## lets predict one image based on the classifier created above
     ## we will compare the validation accuracies
@@ -202,12 +195,12 @@ def execute():
     ## the dim of the input to the neural network, hence needs to be (batch , abc)
     ## where abc is the dimension of the input eg 2d or 3d
     
-    image = np.expand_dims(img_to_array(image), axis = 0)
-    y_true = 1 # image is of a dog
+    # image = np.expand_dims(img_to_array(image), axis = 0)
+    # y_true = 1 # image is of a dog
 
-    y_predict = classifier.predict(image)
+    # y_predict = classifier.predict(image)
 
-    print(y_predict)
+    # print(y_predict)
 
 
 execute()
