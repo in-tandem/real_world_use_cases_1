@@ -4,10 +4,19 @@ from keras.layers import Convolution2D
 from keras.layers import MaxPooling2D
 from keras.layers import Flatten
 from keras.layers import Dense
-from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator,img_to_array,load_img
 from keras.utils import plot_model
 from keras import losses
 from keras import optimizers
+from keras.callbacks import Callback
+from skimage import io
+
+FULL_TRAINING_PATH = 'CNN//Convolutional_Neural_Networks//dataset//training_set'
+FULL_TESTING_PATH = 'CNN/Convolutional_Neural_Networks/dataset/test_set'
+
+SMALL_TRAINING_PATH = 'CNN//Convolutional_Neural_Networks//smaller_set//training_set'
+SMALL_TESTING_PATH = 'CNN/Convolutional_Neural_Networks/smaller_set/test_set'
+
 
 def prepare_classifier(image_shape):
 
@@ -103,7 +112,35 @@ def getTestingData(path):
                         class_mode='binary'
         )
 
+    print('Testing data found is :' , test_set.class_indices)
+    print('Predictions to be made by model are : ', test_set.class_indices.values())
+
     return test_set
+
+
+
+## lets create a Callback object to check the predictions made by keras
+## at the end of each epoch
+
+class PredictionLogger(Callback):
+
+    def on_epoch_end(self, epoch, logs={}):
+        """
+            len(self.validation_data) == 3, because 
+            validation_data[0] == train_x (that you input in model.fit()), 
+            validation_data[1] == train_y, 
+            validation_data[2]=sample_weight,
+
+        validation_data needs to be provided in the fit method
+        else self.validation_data will be empty
+
+        """
+        val_predict = self.model.predict(self.validation_data[0])
+        # val_predict = (val_predict > 0.5) ##using the same activation function
+        val_targ = self.validation_data[1]
+        print("val_predict: ", val_predict)
+        print("actual :", val_targ)
+        return
 
 
 def execute():
@@ -117,8 +154,8 @@ def execute():
     """
     
     
-    training_data = getTrainingData(path = 'CNN//Convolutional_Neural_Networks//dataset//training_set')
-    testing_data = getTestingData(path = 'CNN/Convolutional_Neural_Networks/dataset/test_set' )
+    training_data = getTrainingData(path = SMALL_TRAINING_PATH)
+    testing_data = getTestingData(path = SMALL_TESTING_PATH)
     
     classifier = prepare_classifier(training_data.image_shape)
 
@@ -132,18 +169,45 @@ def execute():
     classifier.fit_generator(
                             training_data,
                             steps_per_epoch = training_data.samples,
-                            epochs = 1,
+                            epochs = 10,
                             validation_data = testing_data,
                             validation_steps = testing_data.samples
+                            # callbacks = [PredictionLogger()]
                          )
 
-    ## TODO
+
+    ## commented for now since for now we are only trying out for 1 epoch
+    # plotResultsAcrossEpoch(classifier.history.history.get(''), 1, \
+    #                   xlabel = '', ylabel = '', title = '')
+    
+
     ## check.. is the history still available
     ## check.. use one image to check for predict function
     ## check.. when you predict see what it returns.
     ## check.. if its a number we may need to specify a threshold value for which is cat/dog
     ## 
     # plot_model(classifier, to_file='image_classifier_model.png')
-    ## check the return values from image data generators
+    
+    ## lets predict one image based on the classifier created above
+    ## we will compare the validation accuracies
+
+    image = load_img(
+        'CNN/Convolutional_Neural_Networks/dataset/single_prediction/cat_or_dog_1.jpg',
+        target_size = training_data.image_shape
+    )
+
+    print(type(image))
+
+    ## all neural networks execute in batch. and hence consider inputs in batches
+    ## the dim of the input to the neural network, hence needs to be (batch , abc)
+    ## where abc is the dimension of the input eg 2d or 3d
+    
+    image = np.expand_dims(img_to_array(image), axis = 0)
+    y_true = 1 # image is of a dog
+
+    y_predict = classifier.predict(image)
+
+    print(y_predict)
+
 
 execute()
