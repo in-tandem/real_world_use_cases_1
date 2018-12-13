@@ -9,13 +9,14 @@ from keras.utils import plot_model
 from keras import losses
 from keras import optimizers
 from keras.callbacks import Callback
-from skimage import io
-
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import Pipeline
 
 FULL_TRAINING_PATH = 'CNN//Convolutional_Neural_Networks//dataset//training_set'
 FULL_TESTING_PATH = 'CNN/Convolutional_Neural_Networks/dataset/test_set'
 
-SMALL_TRAINING_PATH = 'CNN//Convolutional_Neural_Networks//smaller_set//training_set'
+SMALL_TRAINING_PATH = 'CNN/Convolutional_Neural_Networks/smaller_set/training_set'
 SMALL_TESTING_PATH = 'CNN/Convolutional_Neural_Networks/smaller_set/test_set'
 
 
@@ -56,12 +57,16 @@ def prepare_classifier(image_shape):
 
     classifier.add(Dense(units = 64, activation = 'relu' ))
 
+    classifier.add(Dense(units = 64, activation = 'relu' ))
+
     ## final layer. we are expecting binary classification hence units = 1
     ## and loss function as logistic sigmoid
     classifier.add(Dense(units = 1, activation = 'sigmoid'))
 
-    return classifier
+    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
 
+
+    return classifier
 
 def getTrainingData(path):
     """
@@ -96,8 +101,6 @@ def getTrainingData(path):
 
     return training_set
 
-
-
 def getTestingData(path):
     """
         we keep this image generator absolutely simple since 
@@ -118,31 +121,32 @@ def getTestingData(path):
 
     return test_set
 
+def fit( training_data, testing_data):
+
+    classifier = KerasClassifier(build_fn = prepare_classifier)
+    pipeline = Pipeline([
+                ('keras_classifier', classifier)
+        ])
+
+    param_grid = {
+
+        'keras_classifier__batch_size' : [10,20,30,50],
+        'keras_classifier__epochs' : [100, 200, 300, 500],
+        'keras_classifier__image_shape' : [training_data.image_shape],
+        
+    }
 
 
-## lets create a Callback object to check the predictions made by keras
-## at the end of each epoch
+    grid = GridSearchCV(estimator = pipeline, param_grid = param_grid, n_jobs = -1)
+    grid.fit_generator(
+                            training_data,
+                            steps_per_epoch = training_data.samples,
+                            validation_data = testing_data,
+                            validation_steps = testing_data.samples
+                         )
+    print("Best parameters are : ", grid.best_params_, '\n grid best score :', grid.best_score_)
 
-class PredictionLogger(Callback):
-
-    def on_epoch_end(self, epoch, logs={}):
-        """
-            len(self.validation_data) == 3, because 
-            validation_data[0] == train_x (that you input in model.fit()), 
-            validation_data[1] == train_y, 
-            validation_data[2]=sample_weight,
-
-        validation_data needs to be provided in the fit method
-        else self.validation_data will be empty
-
-        """
-        val_predict = self.model.predict(self.validation_data[0])
-        # val_predict = (val_predict > 0.5) ##using the same activation function
-        val_targ = self.validation_data[1]
-        print("val_predict: ", val_predict)
-        print("actual :", val_targ)
-        return
-
+    return grid.best_estimator_.model
 
 def execute():
     """
@@ -158,50 +162,13 @@ def execute():
     training_data = getTrainingData(path = SMALL_TRAINING_PATH)
     testing_data = getTestingData(path = SMALL_TESTING_PATH)
     
-    classifier = prepare_classifier(training_data.image_shape)
+    best_model = fit(training_data, testing_data)    
 
-    ##another way
-    # classifier.compile(optimizer = 'adam', loss = losses.binary_crossentropy, metrics = ['accuracy'])
+    metric_names = best_model.metric_names
+    metric_values = best_model.metric_values
 
+    for i, j in zip(metric_names, metric_values):
 
-    classifier.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-
-
-    ## steps_per_epoch = number of data provided. in our case it is 8k images in training set
-    classifier.fit_generator(
-                            training_data,
-                            steps_per_epoch = training_data.samples,
-                            epochs = 10,
-                            validation_data = testing_data,
-                            validation_steps = testing_data.samples
-                            # callbacks = [PredictionLogger()]
-                         )
-
-    # classifier.save('cats_or_dogs_full.h5py')
-    ## commented for now since for now we are only trying out for 1 epoch
-    # plotResultsAcrossEpoch(classifier.history.history.get(''), 1, \
-    #                   xlabel = '', ylabel = '', title = '')
-    
-    ## lets predict one image based on the classifier created above
-    ## we will compare the validation accuracies
-
-    # image = load_img(
-    #     'CNN/Convolutional_Neural_Networks/dataset/single_prediction/cat_or_dog_1.jpg',
-    #     target_size = training_data.image_shape
-    # )
-
-    # print(type(image))
-
-    ## all neural networks execute in batch. and hence consider inputs in batches
-    ## the dim of the input to the neural network, hence needs to be (batch , abc)
-    ## where abc is the dimension of the input eg 2d or 3d
-    
-    # image = np.expand_dims(img_to_array(image), axis = 0)
-    # y_true = 1 # image is of a dog
-
-    # y_predict = classifier.predict(image)
-
-    # print(y_predict)
-
-
+        print(i,':', j)
+ 
 execute()
