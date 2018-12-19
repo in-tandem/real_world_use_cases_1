@@ -25,7 +25,8 @@ def create_input_data(number_of_rows, number_of_columns = 3):
 ## technique. once reduced the network would be plotted on matplotlib
 ## to check if we have actually reduced the dimensions
 
-def self_organize_map(x, size_of_grid, epoch, learning_rate, tau, sigma ):
+def self_organize_map(x, size_of_grid, epoch, learning_rate, tau, \
+                        sigma, final_learning_rate = 0.02, iteration_max = 0):
     """
         runs a SOM on the given input data.
 
@@ -48,7 +49,11 @@ def self_organize_map(x, size_of_grid, epoch, learning_rate, tau, sigma ):
         :param sigma: the sigma value will be used to depict the starting radius
                       after every iteration we will decay the radius using the tau parameter
 
+        :param final_learning_rate: if learning rate needs to be decayed this is the value we will
+                                take after iteration count exceeds the iteration_max
 
+        :param iteration_max: this parameter will be used to dictate from which particular 
+                            iteration the learning rate will stop decaying
     """
     
     dimensionality_of_input = x.shape[1]
@@ -69,7 +74,9 @@ def self_organize_map(x, size_of_grid, epoch, learning_rate, tau, sigma ):
         ## based on the neighborhood function as sigma parameter(As radius)
         ## and tau parameter( as decaying option)
 
-        update_weights(x_random,_best_matching_index, weight_matrix,learning_rate,tau, sigma, _iteration)
+        update_weights(x_random,_best_matching_index, \
+                            weight_matrix,learning_rate, \
+                                tau, sigma, _iteration, iteration_max, final_learning_rate)
 
     ## our weight_matrix is the network which has learnt the behavior and
     ## correlations between the values. we will plot this grid on a matplot
@@ -118,7 +125,9 @@ def compare_node_with_weight_matrix(x, w):
     ## where each tuple represents the co ordinates
     return sorted(_units, key = lambda x: _units[x])[0]
 
-def update_weights(x, _best_matching_index, weight_matrix, learning_rate, tau, sigma, iteration):
+def update_weights(x, _best_matching_index, weight_matrix, \
+                    learning_rate, tau, sigma, iteration, \
+                        iteration_max, final_learning_rate):
     """
 
         how are the weights updated.
@@ -139,10 +148,44 @@ def update_weights(x, _best_matching_index, weight_matrix, learning_rate, tau, s
             if distance <= radius**2: ## within sphere of influence
                 
                 degree_of_influence = calculate_degree_of_influence(radius, distance)
-
+                learning_rate = calculate_learning_rate(learning_rate, iteration_max, \
+                                    iteration, tau, final_learning_rate)
                 new_weight = neuron + (learning_rate*degree_of_influence*(x - neuron))
 
                 neuron = new_weight
+
+
+def calculate_learning_rate(learning_rate, iteration_max, iteration, tau, final_learning_rate):
+    """
+        learning rate will start decaying and reach a limit after iteration
+        reaches iteration_max value
+
+        if learning rate needs to be decayed, we need to pass not only the
+        iteration max as a non zero value, we would also need to pass
+        the range of learning rate
+        eg: learning_rate = (0.1 , 0.02) 
+
+        the way it will work is
+
+        if iteration< itration_max
+            new_learning_rate = learning_rate[0] * exp(-iteration/tau)
+        else
+            new_learning_rate = learning_rate[1]
+
+    """       
+    
+    if iteration_max > 0 and final_learning_rate:
+        
+        if iteration < iteration_max:
+            return learning_rate * np.exp(-iteration/tau)
+    
+        else:
+
+            return final_learning_rate
+
+    else:
+        return learning_rate
+
 
 def decay_radius(radius, time_decay, iteration):
     """
@@ -186,7 +229,7 @@ def execute():
     tau = 0.2
     sigma = 12
 
-    weight_matrix = self_organize_map(x, weight_shape,epoch,learning_rate,tau,sigma)
+    weight_matrix = self_organize_map(x, weight_shape,epoch,learning_rate,tau,sigma, iteration_max= 200)
 
     plot_in_self_organized_map(weight_matrix)
 
