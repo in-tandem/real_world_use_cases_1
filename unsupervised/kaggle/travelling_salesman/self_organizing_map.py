@@ -140,20 +140,23 @@ def update_weights(x, _best_matching_index, weight_matrix, \
     radius = decay_radius(sigma, tau, iteration)
 
     for i, j in enumerate(weight_matrix):
-        
+        count = 0
         for neuron in j:
 
-            distance = calculate_distance( _best_matching_unit, neuron )
+            distance = calculate_distance( np.reshape(_best_matching_index,2), np.reshape((i,count),2) )
 
             if distance <= radius**2: ## within sphere of influence
                 
                 degree_of_influence = calculate_degree_of_influence(radius, distance)
+                
                 learning_rate = calculate_learning_rate(learning_rate, iteration_max, \
                                     iteration, tau, final_learning_rate)
-                new_weight = neuron + (learning_rate*degree_of_influence*(x - neuron))
+                
+                new_weight = neuron + (learning_rate * degree_of_influence * (x - neuron))
 
                 neuron = new_weight
-
+            
+            count+= 1
 
 def calculate_learning_rate(learning_rate, iteration_max, iteration, tau, final_learning_rate):
     """
@@ -201,7 +204,11 @@ def calculate_degree_of_influence(radius, distance):
     :param distance: the distance between current weight cell and the best matching unit
 
     """
-    return np.exp(- distance/ (2 * (radius)**2))
+    denom = 2 * (radius)**2
+    if denom > np.finfo(np.float).eps:
+        return np.exp(- distance/denom) 
+    else:
+        return 0
 
 def plot_in_self_organized_map(net):
     fig = plot.figure()
@@ -223,7 +230,7 @@ def execute():
 
     x = scale_input_data(create_input_data(100)) ## we create a 100 row, 3d color map and scale it
 
-    epoch = 10000
+    epoch = 2000
     weight_shape = (4,4)
     learning_rate = 0.5
     tau = 0.2
