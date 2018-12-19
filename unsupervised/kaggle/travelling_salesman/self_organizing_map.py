@@ -61,6 +61,7 @@ def self_organize_map(x, size_of_grid, epoch, learning_rate, tau, \
     ## random weight matrix initialized.
     weight_matrix = np.random.rand(size_of_grid[0],size_of_grid[1],dimensionality_of_input)
 
+    # sigma = max(weight_matrix[0], weight_matrix[1]) / 2
     for _iteration in range(epoch):
 
         ## select a random x input
@@ -94,6 +95,7 @@ def calculate_distance(a, b):
     node and weight neuron.
 
     """
+    # return np.sum((a-b) ** 2)
     return np.linalg.norm(a - b)
 
 
@@ -106,7 +108,8 @@ def scale_input_data(x):
     done manually as well.
 
     """
-
+    # max_value = x.max()
+    # return x/x.max()
     return MinMaxScaler(feature_range = (0,1)).fit_transform(x)
 
 def compare_node_with_weight_matrix(x, w):
@@ -154,7 +157,9 @@ def update_weights(x, _best_matching_index, weight_matrix, \
                 
                 new_weight = neuron + (learning_rate * degree_of_influence * (x - neuron))
 
-                neuron = new_weight
+                # neuron = new_weight
+
+                weight_matrix[i][count] = new_weight
             
             count+= 1
 
@@ -231,10 +236,10 @@ def execute():
     x = scale_input_data(create_input_data(100)) ## we create a 100 row, 3d color map and scale it
 
     epoch = 2000
-    weight_shape = (4,4)
+    weight_shape = (10,10)
     learning_rate = 0.5
-    tau = 0.2
-    sigma = 12
+    tau = 1000
+    sigma = 5 ## initial radius will be half way of the weight matrix dimension (5x,5y) /2 = 2.5
 
     weight_matrix = self_organize_map(x, weight_shape,epoch,learning_rate,tau,sigma, iteration_max= 200)
 
