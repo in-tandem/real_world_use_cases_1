@@ -245,4 +245,4 @@ def execute():
 
     plot_in_self_organized_map(weight_matrix)
 
-execute()
+# execute()
