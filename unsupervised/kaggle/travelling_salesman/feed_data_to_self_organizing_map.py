@@ -40,15 +40,15 @@ def execute():
 
     # 2. create a network and feed to SOM
 
-    epoch = 2000
-    weight_shape = (number_of_cities, 1)
+    epoch = 5000
+    weight_shape = (number_of_cities * 4, 1)
     learning_rate = 0.5
     tau = 1000
-    sigma = 3500 ## initial radius will be half way of the weight matrix dimension (5x,5y) /2 = 2.5
+    sigma = 200000 ## initial radius will be half way of the weight matrix dimension (5x,5y) /2 = 2.5
 
     weight_matrix = self_organize_map(cities[1:], weight_shape,epoch,learning_rate,tau,sigma, iteration_max= 800)
 
-    np.savez_compressed('normalized_network.npz', network = weight_matrix)
+    np.savez_compressed('normalized_network_4times.npz', network = weight_matrix)
 
 
 execute()

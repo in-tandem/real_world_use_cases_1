@@ -17,6 +17,9 @@ from sklearn.preprocessing import MinMaxScaler
 import numpy as np 
 from self_organizing_map import self_organize_map , compare_node_with_weight_matrix,calculate_distance
 from copy import deepcopy
+from multiprocessing import Pool 
+import random
+
 
 def select_closest(candidates, origin):
     """Return the index of the closest candidate to a given point."""
@@ -37,24 +40,64 @@ def get_route(cities, network):
     
     """
     
-    route = {}
+    # route = {}
+    # count = 0
+    # for city in cities:
+
+    #     index =compare_node_with_weight_matrix(city, network)
+
+    #     route[count] = index 
+
+    #     count+=1
+
+    # print('foudn route: ', route)    
+    # return sorted(route, key = lambda x: route[x][0])
+
+
+    route = []
     count = 0
     for city in cities:
 
-        index =compare_node_with_weight_matrix(city, network)
+        route.append(compare_node_with_weight_matrix(city, network))
 
-        route[count] = index 
+    print('foudn route: ', route)    
+    return sorted(route)
 
-        count+=1
 
+def get_route_parallelism(cities, network):
+    """
     
-    return sorted(route, key = lambda x: route[x][0])
-    # cities['winner'] = cities.apply(
-    #     lambda c: select_closest(network, c),
-    #     axis=1, raw=True)
+    For each city, calculate the neuron closest resembling
+    it. say it is n1. find the index of n1 in the weight matrix
+    .
+    the route will cities , sorted by the order of appearance
+    of their matching neuron n1 in the weight matrix
+    
+    """
+    
+    route = None
+    count = 0
+    
+    print('started to find route')
 
-    # return cities.sort_values('winner').index
+    with Pool(8) as p:
 
+        route= p.starmap(compare_node_with_weight_matrix, [(i,network) for i in cities], 10)
+
+
+    print('done finding route', route)
+    # route = [i[0] for i in route]
+    return sorted(route)
+    # for city in cities:
+
+    #     index =compare_node_with_weight_matrix(city, network)
+
+    #     route[count] = index 
+    #     # print('i found index: ', index)
+    #     count+=1
+
+    # # return route    
+    # return sorted(route, key = lambda x: route[x][0])
 
 
 FILE_NAME = 'tsp_data_set/dj38.tsp.txt'
@@ -80,33 +123,37 @@ cities = MinMaxScaler(feature_range= (0,1)).fit_transform(cities)
 
 # 2. create a network and feed to SOM
 
-epoch = 2000
-weight_shape = (number_of_cities * 8, 1)
+epoch = 10000
+weight_shape = (number_of_cities * 2, 1)
 learning_rate = 0.5
-tau = 1000
-sigma = 12 ## initial radius will be half way of the weight matrix dimension (5x,5y) /2 = 2.5
+tau = 2000
+sigma = 14 ## initial radius will be half way of the weight matrix dimension (5x,5y) /2 = 2.5
 
 weight_matrix = self_organize_map(cities, weight_shape,epoch,learning_rate,tau,sigma, iteration_max= 800)
 
-print(weight_matrix)
+print(weight_matrix, len(cities))
 
-route = get_route(cities, weight_matrix)
+if __name__ == '__main__':
 
-print(route, len(route), len(set(route)))
+    # route = get_route(cities, weight_matrix)
+    route = get_route_parallelism(cities, weight_matrix)
 
-adjacency_matrix = []
+    print(route, len(route), len(set(route)))
 
-for count in range(number_of_cities):
+    adjacency_matrix = []
 
-    row = []
+    for count in range(number_of_cities):
 
-    for inner_count in range(number_of_cities):
-        row.append(calculate_distance(np.reshape(original_city[count],2), np.reshape(original_city[inner_count],2)))
+        row = []
 
-    adjacency_matrix.append(row)
+        for inner_count in range(number_of_cities):
+            row.append(calculate_distance(np.reshape(original_city[count],2), np.reshape(original_city[inner_count],2)))
 
-sum = 0
-for i in range(len(route) -2) :
-    sum = sum + adjacency_matrix[i][i+1]
+        adjacency_matrix.append(row)
 
-print(sum)
+    sum = 0
+    
+    for i in range(len(route) -2) :
+        sum = sum + adjacency_matrix[i][i+1]
+
+    print(sum)

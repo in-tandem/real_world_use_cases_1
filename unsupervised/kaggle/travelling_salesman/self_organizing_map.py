@@ -3,6 +3,7 @@ from matplotlib import pyplot as plot
 from sklearn.preprocessing import MinMaxScaler
 import random
 from matplotlib import patches as patches
+from scipy.spatial import KDTree
 
 def create_input_data(number_of_rows, number_of_columns = 3):
     """
@@ -114,19 +115,25 @@ def scale_input_data(x):
 
 def compare_node_with_weight_matrix(x, w):
 
-    _units = {}
+    # _units = {}
     
-    for i, j in enumerate(w):
-        count = 0
+    # for i, j in enumerate(w):
+    #     count = 0
         
-        for neuron in j:
+    #     for neuron in j:
 
-            _units[(i,count)] = calculate_distance( x, neuron )
-            count += 1
+    #         _units[(i,count)] = calculate_distance( x, neuron )
+    #         count += 1
 
-    ## sorting the dictionary according to value of each tuple
-    ## where each tuple represents the co ordinates
-    return sorted(_units, key = lambda x: _units[x])[0]
+    # ## sorting the dictionary according to value of each tuple
+    # ## where each tuple represents the co ordinates
+    # index = sorted(_units, key = lambda xx: _units[xx])[0]
+    # print('i found an index: ', index)
+
+    reshaped_net = np.reshape(w, (w.shape[0],w.shape[2]))
+    point, index = KDTree(reshaped_net).query(x)
+    return index
+
 
 def update_weights(x, _best_matching_index, weight_matrix, \
                     learning_rate, tau, sigma, iteration, \
@@ -139,14 +146,17 @@ def update_weights(x, _best_matching_index, weight_matrix, \
 
     """
 
-    _best_matching_unit = weight_matrix[_best_matching_index[0]][_best_matching_index[1]]
+    _best_matching_unit = weight_matrix[_best_matching_index]
+    # _best_matching_unit = weight_matrix[_best_matching_index[0]][_best_matching_index[1]]
     radius = decay_radius(sigma, tau, iteration)
 
     for i, j in enumerate(weight_matrix):
         count = 0
         for neuron in j:
 
-            distance = calculate_distance( np.reshape(_best_matching_index,2), np.reshape((i,count),2) )
+            distance = calculate_distance( _best_matching_index, np.reshape((i,count),2) )
+    
+            # distance = calculate_distance( np.reshape(_best_matching_index,2), np.reshape((i,count),2) )
 
             if distance <= radius**2: ## within sphere of influence
                 
