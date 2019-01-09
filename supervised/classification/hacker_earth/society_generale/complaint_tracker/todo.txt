@@ -1,0 +1,13 @@
+round 1 : ignore complaint summary/just run simple grid search/ check for scores
+
+round 2 : ignore complaint summary/ just run simple grid seach/figure out the roc curve issue
+
+round 3 : ignore complaint summary/just run simple grid search/ figure out classification matrix
+
+round 4 : ignore complaint summary/ run grid search of xgbclassifier
+
+round 5 : ignore complaint summary/ run grid search of other classifiers such as rdge/ensemble,etc
+
+...to do...all i can think of right now
+
+tf-idf normalization???
