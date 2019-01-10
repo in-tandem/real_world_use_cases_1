@@ -10,4 +10,14 @@ round 5 : ignore complaint summary/ run grid search of other classifiers such as
 
 ...to do...all i can think of right now
 
-tf-idf normalization???
+tf-idf normalization??? -- for text classification , for text modelling
+
+things i think i can do:
+
+1. remove noise..keywords like the, is , a , i , you,etc. udemy course has a video on how to do this
+2. check if set reduces
+3. deal with apostrophes
+4. may be convert to tfid, and then run cosine similarity.
+5. run lda to deduce the main thing being spoken about - topic modelling
+
+
