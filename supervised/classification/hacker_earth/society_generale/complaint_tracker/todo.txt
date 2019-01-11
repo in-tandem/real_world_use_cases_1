@@ -1,18 +1,21 @@
-round 1 : ignore complaint summary/just run simple grid search/ check for scores
+round 1 : ignore complaint summary/just run simple grid search/ check for scores 
+		- failed..since columns numbers were different due to categorical fields
 
-round 2 : ignore complaint summary/ just run simple grid seach/figure out the roc curve issue
+round 2 : ignore complaint summary/ categorize complaint reason by NLP /just run simple grid search: rank 142
 
-round 3 : ignore complaint summary/just run simple grid search/ figure out classification matrix
+round 3 : ignore complaint summary/ just run simple grid seach/figure out the roc curve issue
 
-round 4 : ignore complaint summary/ run grid search of xgbclassifier
+round 4 : ignore complaint summary/just run simple grid search/ figure out classification matrix
 
-round 5 : ignore complaint summary/ run grid search of other classifiers such as rdge/ensemble,etc
+round 5 : ignore complaint summary/ run grid search of xgbclassifier
+
+round 6 : ignore complaint summary/ run grid search of other classifiers such as rdge/ensemble,etc
 
 ...to do...all i can think of right now
 
 tf-idf normalization??? -- for text classification , for text modelling
 
-things i think i can do:
+things i think i can do:(all done, divided into 25 diff topics)
 
 1. remove noise..keywords like the, is , a , i , you,etc. udemy course has a video on how to do this
 2. check if set reduces
