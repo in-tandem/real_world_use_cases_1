@@ -7,9 +7,17 @@ round 3 : ignore complaint summary/ just run simple grid seach/figure out the ro
 
 round 4 : ignore complaint summary/just run simple grid search/ figure out classification matrix
 
-round 5 : ignore complaint summary/ run grid search of xgbclassifier
+round 5 : ignore complaint summary/ run grid search of xgbclassifier - done. rank 157
 
-round 6 : ignore complaint summary/ run grid search of other classifiers such as rdge/ensemble,etc
+round 6 : ignore complaint summary/ run grid search of other classifiers such as rdge/ensemble,etc - not good scores
+
+round 7 : ignore complaint summary/ imblearn on imbalanced data sets
+
+round 8 : keras --done no improvement
+
+round 9 : stratified shuffle split - done. rank 157
+
+round 10 : keras, figure out a way to pass f1 weighted as metric in keras
 
 ...to do...all i can think of right now
 
