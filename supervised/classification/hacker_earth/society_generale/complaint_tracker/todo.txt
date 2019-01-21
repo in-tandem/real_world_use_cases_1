@@ -19,6 +19,8 @@ round 9 : stratified shuffle split - done. rank 157
 
 round 10 : keras, figure out a way to pass f1 weighted as metric in keras
 
+round 11 : lgbm lgbclassifier -gave pretty much similar scores
+
 ...to do...all i can think of right now
 
 tf-idf normalization??? -- for text classification , for text modelling
