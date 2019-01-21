@@ -1,0 +1,74 @@
+COMPLAINT STATUS TRACKING
+---------------------------------------------------------------------
+
+======================================================================================================================
+Final Submission Score 						: 0.7084
+Metric used 								: F1 Weighted
+Model used									: DecisionTreeClassifier with depth of 8 and criteria as GINI
+Cross validation used						: stratified k fold with ten fold
+Parameter tuning approach 					: gridsearchcv
+Source Files used							: train.csv/ test.cv
+Language									: Python 3
+Libraries used 								: scikit learn, pandas, numpy, xgboost, lightgbm, matplotlib, gensim, nltk
+
+========================================================================================================================
+
+GIT : https://github.com/in-tandem/real_world_use_cases_1/tree/master/supervised/classification/hacker_earth/society_generale/complaint_tracker
+
+
+Approach Summary : 
+--------------------------------------------------------------------
+
+Feature engineered given training dataset by using one hot encoding for the categorical fields of transaction-type,company-reason and consumer-disputes.
+Any empty values in the aforementioned fields where replaced with most common values. For the date fields, panda.DatetimeIndex was used as well as we created a new column counting days passed. Complaint reason feature engineered by using topic modelling and using gensim/nltk libraries , complaint reason in training/testing data was divided into 24 bins. More on this in the **TOPIC MODELLING section .
+
+Once data was ready, it was fed to classifier models in scikit learn library. Parameter tuning was done via gridsearch. To prevent overfitting and bias,
+model was fed to ten fold stratified k fold cross validation and learning curves were also plotted for each model. Metric used for scoring was f1 weighted to account for unbalanced target variables.
+
+Final model which performed best with lowest variance was DecisionTreeClassifier with depth of 8 and criteria as gini. 
+Ensemble learning was applied on top of this model, but it did not provide any siginificant gain. 
+Industry accepted boosting techniques such as XGB and lightgbm was also used. However none of them provided any siginificant gains and infact resulted in worse scores in some instances.
+
+Hence final prediction on test data was made with DecisionTreeClassifier
+
+
+Feature Engineering:
+-----------------------------------------------------------------------------
+
+1. Date columns Date received and Date-sent-to-company were converted to panda datetimeindex.
+
+2. Data columns were additionally converted into days passed since count. Essentially its the number of days difference between given date and today
+
+3. transaction-type,company-reason and consumer-disputes were passed through usual labelencoder and one hot encoding
+
+4. Complaint-reason field was tricky. Even though this is a text field, simply passing it through one hot encoding and treating this as a normal categorical field failed. The reason it failed was the differences in complaint reason in traint vs test data. As a result, treating this as a categorical field would result in dimensionality issues in train and test data. As a result, natural language processing was used and topic modelling technique was used to divide up the text fields into 25 unique fields.More on this in the **TOPIC MODELLING section (next section)
+
+5. Since i did not know how to deal with multi language inputs, i ignored the field summary for my modelling
+
+6. Once ready , i had 56 independent variables  in train and test set. All these columns were fed into models with impunity.
+
+
+Topic Modelling:
+-----------------------------------------------------------------------------
+
+This section describes how natural language processing was used to divide up the complaint reason text fields into 24 categorical fields.
+
+Why did i do this? Eyeballing the different complaint reasons it was clear that there are bins that each complaint can belong to. For example, there were complaints about credit card, however they were worded a little bit different. There were complaints about loan/overdraft and once again the phrasing was little bit different but the core complaint was the same. I also noticed tense/pronouns were different for same complaint, eg i did not received, he did not receive. Since i did not have business acumen in banking to divide up the phrases into proper bins(in addition, creation of such rule set may become useless for future complaint types) i decided to use natural language processing to convert complain reasons into topics. ANd feed these topics, instead of original complaint, into my model.
+
+
+
+Libraries used were : nltk, wordnet from nltk, gensim
+
+1. Complaint reason were read from the train set using normal pandas technique
+
+2. complaint reason text field was tokenized and converted into lower case. For tokenization and conversion into lower case, gensim utils simple_processing was used
+
+3. all stop words were removed. nltk stopwords were not used. infact we used gensim stopwords since it had a bigger set
+
+4. WordNetLemmatizer was used along with SnowballStemmer. This made sure phrases like 'i submitted',' you submitted', 'i complained', 'he complained', 'she complained', etc were converted into same root word and the model treated it as same.
+
+5. Once we had root forms of each complaint reason, we created  a bag of word model for each and using LDA(Latent Dirichlet Allocation) we converted the bag of words into 25 different topics. 
+
+6. Once step 5 was applied on training set, we applied the same models on test set to divide up intp 25 different models. IN order to predict the topic the complaint reason belonged to , we simply used the higest probability count.
+
+
