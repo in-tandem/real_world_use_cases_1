@@ -2,7 +2,7 @@ COMPLAINT STATUS TRACKING
 ---------------------------------------------------------------------
 
 ======================================================================================================================
-Final Submission Score 						: 0.72034
+Final Submission Score 						: 0.7084
 Metric used 								: F1 Weighted
 Model used									: DecisionTreeClassifier with depth of 8 and criteria as GINI
 Cross validation used						: stratified k fold with ten fold
@@ -43,11 +43,9 @@ Feature Engineering:
 
 4. Complaint-reason field was tricky. Even though this is a text field, simply passing it through one hot encoding and treating this as a normal categorical field failed. The reason it failed was the differences in complaint reason in traint vs test data. As a result, treating this as a categorical field would result in dimensionality issues in train and test data. As a result, natural language processing was used and topic modelling technique was used to divide up the text fields into 25 unique fields.More on this in the **TOPIC MODELLING section (next section)
 
-5. Over and above topic modeling, complaint reason of training data was fed as a corpus to TfidfVectorizer. The vocabulary for the same was used as vocabulary of tfidfvectorization of test data complaint reason. This gave me a n*228 dimension sparse matrix. This was also used as an input data
+5. Since i did not know how to deal with multi language inputs, i ignored the field summary for my modelling
 
-6. Since i did not know how to deal with multi language inputs, i ignored the field summary for my modelling
-
-7. Once ready , i had 56 independent variables  in train and test set. All these columns were fed into models with impunity.
+6. Once ready , i had 56 independent variables  in train and test set. All these columns were fed into models with impunity.
 
 
 Topic Modelling:

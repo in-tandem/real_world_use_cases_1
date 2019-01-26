@@ -9,6 +9,7 @@ from gensim import corpora
 from nltk.stem import WordNetLemmatizer, SnowballStemmer
 import nltk
 import gensim
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 np.random.seed(2018)
 # nltk.download('wordnet')
@@ -123,3 +124,18 @@ for item in train_data_complaint_reason_types:
     topics.append(int(t1))
 
 print(count, len(train_data_complaint_reason_types),set(topics),len(set(topics)))
+
+
+train_complaint_reason = train_data['Complaint-reason'].values.tolist()
+test_complaint_reason = test_data['Complaint-reason'].values.tolist()
+
+tfidf = TfidfVectorizer()
+# tfidf.fit(train_complaint_reason)
+train_vector = tfidf.fit_transform(train_complaint_reason)
+
+tfidf_1 = TfidfVectorizer(vocabulary = tfidf.vocabulary_)
+
+test_vector = tfidf_1.fit_transform(test_complaint_reason)
+
+print('tfidf',test_vector.toarray().shape, train_vector.shape, test_data.shape, train_data.shape)
+
