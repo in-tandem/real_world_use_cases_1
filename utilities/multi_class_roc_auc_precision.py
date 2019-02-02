@@ -1,7 +1,7 @@
 from sklearn.datasets import load_iris
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split, RepeatedStratifiedKFold
 from sklearn.metrics import f1_score,auc, roc_auc_score,roc_curve
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler,LabelBinarizer, label_binarize
@@ -15,22 +15,28 @@ from multi_class_plot_utils import calculate_roc_and_prec_metrics, \
 
 x,y = load_iris(return_X_y= True)
 
-y = label_binarize(y, classes = np.unique(y))
+# y = label_binarize(y, classes = np.unique(y))
 
 x_train,x_test,y_train, y_test = train_test_split(x,y, stratify = y, test_size = 0.3)
 
 classifier = [
-    OneVsRestClassifier(estimator = DecisionTreeClassifier())
+    OneVsRestClassifier(estimator = DecisionTreeClassifier()),
+    DecisionTreeClassifier()
 ]
 
 classifier_name = [
-    'one_v_rest'
+    'one_v_rest',
+    'dt'
 ]
 classifier_param_grid = [
 
     {
         'one_v_rest__estimator__max_depth' : [2,4,6],
         'one_v_rest__estimator__criterion' : ['gini']
+    },
+    {
+        'dt__max_depth' : [2,4,6],
+        'dt__criterion' : ['gini']
     }
 ]
 
@@ -45,7 +51,9 @@ for model, model_name, model_param in zip(classifier, classifier_name, classifie
 
     )
 
-    gridsearch = GridSearchCV(estimator = pipeline, param_grid = model_param, cv = 10, n_jobs = -1, scoring = 'accuracy')
+    cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=12)
+
+    gridsearch = GridSearchCV(estimator = pipeline, param_grid = model_param, cv = cv, n_jobs = -1, scoring = 'accuracy')
 
     search = gridsearch.fit(x_train,y_train)
 
@@ -58,8 +66,9 @@ for model, model_name, model_param in zip(classifier, classifier_name, classifie
         print('inside decision function')
         y_prob = gridsearch.predict_proba(x_test)
         
-        number_of_classes = y_train.shape[1]
-        response = calculate_roc_and_prec_metrics(y_test, y_prob, number_of_classes = number_of_classes)
+        number_of_classes = len(np.unique(y_train))
+        y_test_bin = label_binarize(y_test, classes = np.unique(y_train))
+        response = calculate_roc_and_prec_metrics(y_test_bin, y_prob, number_of_classes = number_of_classes)
 
         roc_params = {
 
@@ -79,3 +88,4 @@ for model, model_name, model_param in zip(classifier, classifier_name, classifie
 
         plot_roc_auc_curve(**roc_params)
         plot_precision_recall_curve(**precision_recall_params)
+
