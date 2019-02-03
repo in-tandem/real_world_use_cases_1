@@ -25,12 +25,12 @@ predict1 = classifier1.predict(x_test)
 predict2 = classifier2.predict(x_test)
 predict3 = classifier3.predict(x_test)
 
-weight1 = 0.3
-weight2 = 0.3
-weight3 = 0.4
+weight1 = 0.1
+weight2 = 0.6
+weight3 = 0.3
 weights = [weight1,weight2,weight3]
 
-predictions = np.array([predict1,predict1,predict3])
+predictions = np.array([predict1,predict2,predict3])
 
 ##why apply along axis..well bincount doesnt take into account any axis. it always works off flat arrays
 ## inour predictions, shape is 45, but when we have 3, we have shape 3,45. Where each classifier has
@@ -42,5 +42,5 @@ predictions = np.array([predict1,predict1,predict3])
 
 vote = np.apply_along_axis(lambda x:  np.argmax(np.bincount(x, weights = weights)), axis = 0, arr = predictions)
 
-print(vote.shape, vote)
+print(vote.shape, vote,predict1)
 # np.apply_along_axis(lambda x : np.bincount(x, weights = weights),axis = 1, arr= predictions.T)
